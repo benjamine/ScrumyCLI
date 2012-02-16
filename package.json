@@ -1,0 +1,41 @@
+{
+  "name": "scrumycli",
+  "preferGlobal": "true",
+  "version": "0.0.1",
+  "author": "Benjamín Eidelman <beneidel@gmail.com>",
+  "description": "a CLI utility for simple batch operations on scrumy.com boards",
+  "contributors": [ 
+    {
+      "name": "Benjamín Eidelman",
+      "email": "beneidel@gmail.com"
+    } 
+  ],
+  "bin": {
+    "scrumycli": "./bin/scrumycli"
+  },
+  "scripts": {
+  },
+  "main": "./scrumycli",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/benjamine/scrumycli.git"
+  },
+  "keywords": [
+    "scrumy",
+    "cli",
+    "scrum"
+  ],
+  "dependencies" : {
+    "request"   :  ">=2.9.100",
+    "commander"   :  ">=0.5.2"
+  },
+  "noAnalyze": true,
+  "devDependencies": {
+  },
+  "bundleDependencies": [
+  ],
+  "license": "MIT",
+  "engine": {
+    "node": ">=0.6"
+  }
+}
