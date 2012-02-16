@@ -19,6 +19,10 @@ ScrumyCLI could be used for:
 
 Note: ScrumyCLI uses scrumy.com REST API, which at the moment of this writing, doesn't support realtime notifications, so after doing modifications to your current sprint with this tool, you have to Refresh to see them on your browser.
 
+## Requirements
+
+ - NodeJS 0.6+ (with npm)
+ - In order to access the scrumy.com REST API you need to register a PRO Project board on http://scrumy.com
 
 ## Installation
 
@@ -30,6 +34,8 @@ Note: ScrumyCLI uses scrumy.com REST API, which at the moment of this writing, d
 For instructions run:
 
     scrumycli --help
+
+Note: scrumy password can be specified as a command argument, otherwise it will be prompted on the command line.
 
 ## License
 
