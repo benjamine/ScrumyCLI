@@ -1,7 +1,7 @@
 Scrumy CLI
 ==============
 
-Command line interface for simple batch tasks on scrumy.com boards.
+**Command line interface for simple batch tasks on http://scrumy.com boards.**
 
 Scrumy.com is a website that offers online scrum boards (sprint backlogs).
 I'm not related to scrumy.com, I wrote this tool simplify some batch tasks we do on CI:
@@ -9,6 +9,7 @@ I'm not related to scrumy.com, I wrote this tool simplify some batch tasks we do
  - After a successfull build to QA, nark "Test" tasks in the verify column as "QA" (using scrumer name)
 
 ScrumyCLI could be used for:
+
  - Querying the current sprint (filtering by story title, task title, state or scrumer)
  - Perform some batch changes on the filtered results:
    - Add a task to each story
