@@ -27,7 +27,8 @@ Note: ScrumyCLI uses scrumy.com REST API, which at the moment of this writing, d
 
 ## Installation
 
-    git clone git@github.com:benjamine/ScrumyCLI.git
+    git clone https://benjamine@github.com/benjamine/ScrumyCLI.git
+    cd ScrumyCLI
     npm install
 
 ## Usage
@@ -35,6 +36,10 @@ Note: ScrumyCLI uses scrumy.com REST API, which at the moment of this writing, d
 For instructions run:
 
     scrumycli --help
+
+or:
+
+    node scrumycli.js --help
 
 Note: scrumy password can be specified as a command argument, otherwise it will be prompted on the command line.
 
