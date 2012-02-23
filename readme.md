@@ -66,6 +66,7 @@ output:
     -b, --board <name>              Scrumy board name
     -p, --pwd <password>            Password
     -v, --verbose                   Print debug info
+    -o, --output <filename>         Send output to file
     -e, --empty                     include stories without tasks (after filters)
     -E, --onlyempty                 include only stories without tasks (after filters)
     -s, --state <state>             Filter tasks by state (todo|inprogress|verify|done)

@@ -1,12 +1,14 @@
 #!/usr/bin/env node
 var program = require('commander');
 var request = require('request');
+var fs = require('fs');
 
 program
   .version('0.0.1')
   .option('-b, --board <name>', 'Scrumy board name')
   .option('-p, --pwd <password>', 'Password')
   .option('-v, --verbose', 'Print debug info')
+  .option('-o, --output <filename>', 'Send output to a file')
   
   // filters
   .option('-e, --empty', 'include stories without tasks (after filters)')
@@ -26,9 +28,27 @@ program
   .option('-r, --remove', 'Remove filtered tasks')
   .parse(process.argv);
 
+var log = function(message){
+	console.log(message);
+	if (program.output){
+		fmsg = message.toString().replace(/\r\n|\r/g, '\n');
+		var fd = fs.openSync(program.output, 'a+', 0666);
+		fs.writeSync(fd, fmsg + '\n');
+		fs.closeSync(fd);
+	}
+}
+
+if (program.output){
+	try {
+		fs.unlinkSync(program.output);
+	} catch(err){
+	}
+}
+
 var board = program.board;
 if (!board){
-	throw new Error('no scrumy board specified');
+	log('no scrumy board specified, try --help');
+	return;
 }
 var pwd = program.pwd;
 
@@ -50,7 +70,7 @@ var states = {
 var loadCurrentSprint = function(){
 	var basicAuth = new Buffer(board+':'+pwd).toString('base64');
 	var currenturl = 'https://scrumy.com/api/scrumies/' + board + '/sprints/current.json';
-	console.log('connecting...');
+	console.log('connecting...\n');
 	request({
 			url: currenturl,  
 			headers: {
@@ -60,11 +80,11 @@ var loadCurrentSprint = function(){
 		}, function (error, response, body) {
 
 			if (program.verbose){
-				console.log({ error: error, response: response, body: body});
+				log({ error: error, response: response, body: body});
 			}
 		
 			if (error || response.statusCode != 200) {
-				console.log('error loading current sprint: '+(error || response.statusCode));
+				log('error loading current sprint: '+(error || response.statusCode));
 				return;
 			}
 		
@@ -72,29 +92,30 @@ var loadCurrentSprint = function(){
 			try {
 				data = JSON.parse(body);	
 			} catch (err) {
-				console.log('error parsing data:'+err);
-				console.log('DATA:');
-				console.log(body);
+				log('error parsing data:'+err);
+				log('DATA:');
+				log(body);
 				return;
 			}
 
 			if (!data.sprint) {
-				console.log('error loading current sprint: no data obtained');
-				console.log('DATA:');
-				console.log(body);
+				log('error loading current sprint: no data obtained');
+				log('DATA:');
+				log(body);
 				return;
 			}
 
 			var changes = [];
 			var sprint = data.sprint;
+			log('# '+board.toUpperCase()+ '#\n');
 			if (!sprint.stories || sprint.stories.length == 0) {
 				// no stories
-				console.log('no stories found on current sprint');
+				log('(0 stories on current sprint)\n');
 			}
 			else {
-				console.log(sprint.stories.length + ' stories found on current sprint');
+				log('('+ sprint.stories.length + ' stories on current sprint)\n');
 				var storiesfiltered = 0;
-				console.log('== Stories ==');
+				log('## Stories ##\n');
 				for (var i = 0; i < sprint.stories.length; i++) {
 					var story = sprint.stories[i].story;
 					
@@ -126,7 +147,7 @@ var loadCurrentSprint = function(){
 						continue;
 					} 
 					
-					console.log('  '+story.title);
+					log(' - '+story.title);
 					
 					story.tasks.sort(function(a,b){
 						try {
@@ -135,32 +156,37 @@ var loadCurrentSprint = function(){
 								return stateDiff;
 							}
 						} catch(err){
-							console.log('error parsing task states: '+a.task.state+', '+b.task.state);
+							log('error parsing task states: '+a.task.state+', '+b.task.state);
 						}
 						return a.task.seq - b.task.seq;
 					});
 
 					for (var j = 0; j < tasks.length; j++) {
 						var task = tasks[j];
-						console.log('      ['+task.state+'] '+task.title + (task.scrumer ? ' =>'+task.scrumer.name+'' : ''));
-						
+						log('  - ['+task.state+'] '+task.title + (task.scrumer ? ' => '+task.scrumer.name+'' : ''));
+						var taskChanges = [];
 						if (program.setscrumer || program.addtotitle || program.setstate){
 							var taskData = {};
-							if (program.setscrumer){
+							if (program.setscrumer && task.scrumer.name !== program.setscrumer){
 								taskData.scrumer_name = program.setscrumer;
+								taskChanges.push('assigned to '+taskData.scrumer_name);
 							}
-							if (program.setstate){
+							if (program.setstate && task.state !== program.setstate){
 								taskData.state = program.setstate;
+								taskChanges.push('moved to '+taskData.state);
 							}
 							if (program.addtotitle){
 								taskData.title = task.title + program.addtotitle;
+								taskChanges.push('added "'+program.addtotitle+'" to title');
 							}
-							changes.push({
-								description: 'modified task: '+task.title,
-								url: 'https://scrumy.com/api/tasks/' + task.id + '.json',
-								method: 'PUT',
-								data: taskData
-							});
+							if (taskChanges.length > 0){
+								changes.push({
+									description: 'task "'+task.title+'" '+taskChanges.join(', '),
+									url: 'https://scrumy.com/api/tasks/' + task.id + '.json',
+									method: 'PUT',
+									data: taskData
+								});
+							}
 						}else if (program.remove){
 							changes.push({
 								description: 'removed task: '+task.title,
@@ -191,22 +217,22 @@ var loadCurrentSprint = function(){
 				}
 				
 				if (storiesfiltered === 0){
-					console.log('  no stories');
+					log('  (empty)');
 				}				
 			}
 			
 			
 			if (changes.length > 0){
-				console.log('Saving changes...');
+				log('\nSaving changes...\n');
 				var changeindex = 0;
 				var saveNextChange = function(){
 					if (changeindex >= changes.length){
-						console.log('  '+changes.length+' change'+(changes.length===1?'':'s')+' saved');
+						log('  '+changes.length+' change'+(changes.length===1?'':'s')+' saved');
 						return;
 					}
 					var change = changes[changeindex];
 					if (program.verbose){
-						console.log(change);
+						log(change);
 					}
 					request({ 
 						url: change.url, 
@@ -217,16 +243,16 @@ var loadCurrentSprint = function(){
 						},
 						json: change.data}, function(e,r,body){
 						if (program.verbose){
-							console.log({ error: e, response: r, body: body});
+							log({ error: e, response: r, body: body});
 						}
 						if (!error && r.statusCode < 300) {
-							console.log('  '+change.description+' => '+r.statusCode);
+							log(' - '+change.description+' => '+r.statusCode + ' OK');
 							changeindex++;
 							saveNextChange();
 						} else {
-							console.log('  Error trying to complete: '+change.description);
-							console.log('  Error: '+(e || 'status '+r.statusCode));
-							console.log('  Cancelled remaining '+(changes.length-changeindex)+' changes');
+							log('  Error trying to complete: '+change.description);
+							log('  Error: '+(e || 'status '+r.statusCode));
+							log('  Cancelled remaining '+(changes.length-changeindex)+' changes');
 							process.exit(1);
 						}
 					});				
