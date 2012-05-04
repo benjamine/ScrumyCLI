@@ -124,20 +124,21 @@ var loadCurrentSprint = function(){
 					}
 					
 					var tasks = [];
-
-					for (var j = 0; j < story.tasks.length; j++) {
-						var task = story.tasks[j].task;
-						if (program.state && program.state !== task.state){
-							continue;
+					if (story.tasks) {
+						for (var j = 0; j < story.tasks.length; j++) {
+							var task = story.tasks[j].task;
+							if (program.state && program.state !== task.state){
+								continue;
+							}
+							task.scrumer_name = task.scrumer ? task.scrumer.name : ''; 
+							if (program.scrumer && !new RegExp(program.scrumer,'i').test(task.scrumer_name)) {
+								continue;
+							}
+							if (program.title && !new RegExp(program.title,'i').test(task.title)) {
+								continue;
+							}
+							tasks.push(task);
 						}
-						task.scrumer_name = task.scrumer ? task.scrumer.name : ''; 
-						if (program.scrumer && !new RegExp(program.scrumer,'i').test(task.scrumer_name)) {
-							continue;
-						}
-						if (program.title && !new RegExp(program.title,'i').test(task.title)) {
-							continue;
-						}
-						tasks.push(task);
 					}
 
 					if (tasks.length < 1 && !program.empty && !program.onlyempty) {
